@@ -7,33 +7,37 @@ Original file is located at
     https://colab.research.google.com/drive/1fkUd5_DcZVOmfChgqG2fO1RhXkVdFpNy
 """
 
-#importing libraries
+# importing libraries
 import pandas as pd
 import numpy as np
 import random as random
 import math
 import warnings
+from geographiclib.geodesic import Geodesic
+geod = Geodesic.WGS84
 warnings.filterwarnings("ignore")
 
 
-
 def Dataframe_Load():
+    '''
+        :return: This function returns the dataframe of suppliers and manufacturers.
+        Suppliers are placed across the world and the manufacturer is present in the US
+    '''
+    # Supplier countries
+    # Created an empty dataframe with the required columns for suppliers
+    supplier_details = pd.DataFrame(columns=['Supplier_ID', 'Country', 'lat', 'long', 'Volume', 'Time_taken'])
+    # Reading world cities
+    cities_df = pd.read_csv('worldcities.csv')
+    df2 = cities_df.loc[
+        (cities_df.country == "China") | (cities_df.country == "India") | (cities_df.country == "Japan") | (
+                    cities_df.country == "South Korea") | (cities_df.country == "France")]
+    Supplier_Countries = df2.groupby('country').head(2)
 
-  #Supplier countries 
-  # Created an empty dataframe with the required columns for suppliers
-  supplier_details = pd.DataFrame(columns=['Supplier_ID','Country', 'lat', 'long', 'Volume', 'Time_taken'])
-  #Reading world cities
-  cities_df = pd.read_csv('worldcities.csv')
-  df2 = cities_df.loc[(cities_df.country == "China") | (cities_df.country == "India") | (cities_df.country == "Japan")|(cities_df.country == "South Korea")|(cities_df.country == "France")]
-  Supplier_Countries = df2.groupby('country').head(2)
-  
+    # Taking location o f manufracturer to find distance between other cities and US
+    us = cities_df.loc[(cities_df.country == "United States")]
+    us = us.head(1)
 
-  #Taking location o f manufracturer to find distance between other cities and US 
-  us = cities_df.loc[(cities_df.country == "United States") ]
-  us = us.head(1)
-  
-  return Supplier_Countries, us
-
+    return Supplier_Countries, us
 
 
 '''us["Current_Inventory_Level"] = random.randint(35000,50000)
@@ -41,62 +45,71 @@ def Dataframe_Load():
   us["Inventory_Difference"] = us["Max_Inventory_Level"] - us['Current_Inventory_Level']
   print(us)'''
 
-#Adding reqd columns and randomizing values of volume, time_taken
+# Adding reqd columns and randomizing values of volume, time_taken
 
-Supplier_Countries, us = Dataframe_Load()
-print(Supplier_Countries)
-#print(us)
+
+# print(us)
 def value_add(Supplier_Countries):
-  #us_demand = float(us.Inventory_Difference)
-  time1 = []
-  vol = []
-  material_volume_provided = []
-  demand_satisfied = []
-  count = 0
-  for i in range(1,len(Supplier_Countries)+1):
-    time1.append(random.randint(1,10))
-    if i in [1,4,7]:
-      vol.append(random.randint(1500,2000))
-    elif i in [2,5,8,10]:
-      vol.append(random.randint(2500,4000))
-    else:
-      vol.append(random.randint(750, 1000))
-    #material_volume_provided.append(vol[count] - float(0.1*us_demand))
-    #demand_satisfied.append(0.1*us_demand)
-    #Supplier_Countries.drop(columns = "Material_Provided", inplace = True)
-    #Supplier_Countries.drop(columns = "Supplier_ID", inplace = True)
-
-    count = count + 1
-    #demand_percentage.append((0.1*us['Demand']))
-  time1.sort()
-  Supplier_Countries["Volume"] = vol
-  #Supplier_Countries["Material_Left"] = material_volume_provided
-  #Supplier_Countries["Demand-Satisfied"] = demand_satisfied
-  return Supplier_Countries
-
-Supplier_Countries = value_add(Supplier_Countries)
-
-from geographiclib.geodesic import Geodesic
-geod = Geodesic.WGS84
-def distance_calc(Supplier_Countries, us):
-  '''
-    This function calculates distance between US and other countries
-    >>> distance_calc({'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764]},{'city':['New York'], 'city_ascii':['New York'],'lat':[40.6943],'lng':[-73.9249],'country':['United States'],'iso2':['US'],'iso3':['USA'],'admin_name':['New York'],'capital':['NaN'],'population':[18713220.0],'id':[1840034016]})
-    {'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764], 'Distance_from_us':[10875.131358176366]}
     '''
-  #Calculated the distance of the suppliers from the manufacturing facility in USA
-  distance1 = []
-  lat1 = float(us["lat"])
-  long1 = float(us["lng"])
-  for index, row in Supplier_Countries.iterrows(): 
-    lat2 = row['lat']
-    long2 = row['lng']
-    g = geod.Inverse(lat1, long1, lat2, long2)
-    distance1.append(g['s12']/1000)
-  Supplier_Countries["Distance_from_us"] = distance1
-  Supplier_Countries.sort_values(by='Distance_from_us', ascending = True)
-  return Supplier_Countries
+    :param Supplier_Countries: Dataframe
+    :return: returns suppliers after adding random volume of material which the supplier is providing
+    >>> list1=pd.DataFrame()
+    >>> value_add(list1)
+    Empty DataFrame
+    Columns: [Volume]
+    Index: []
+    '''
+    # us_demand = float(us.Inventory_Difference)
+    time1 = []
+    vol = []
+    material_volume_provided = []
+    demand_satisfied = []
+    count = 0
+    for i in range(1, len(Supplier_Countries) + 1):
+        time1.append(random.randint(1, 10))
+        if i in [1, 4, 7]:
+            vol.append(random.randint(1500, 2000))
+        elif i in [2, 5, 8, 10]:
+            vol.append(random.randint(2500, 4000))
+        else:
+            vol.append(random.randint(750, 1000))
+        # material_volume_provided.append(vol[count] - float(0.1*us_demand))
+        # demand_satisfied.append(0.1*us_demand)
+        # Supplier_Countries.drop(columns = "Material_Provided", inplace = True)
+        # Supplier_Countries.drop(columns = "Supplier_ID", inplace = True)
 
+        count = count + 1
+        # demand_percentage.append((0.1*us['Demand']))
+    time1.sort()
+    Supplier_Countries["Volume"] = vol
+    # Supplier_Countries["Material_Left"] = material_volume_provided
+    # Supplier_Countries["Demand-Satisfied"] = demand_satisfied
+    return Supplier_Countries
+
+
+
+
+
+
+
+def distance_calc(Supplier_Countries, us):
+    '''
+      This function calculates distance between US and other countries
+      >>> distance_calc({'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764]},{'city':['New York'], 'city_ascii':['New York'],'lat':[40.6943],'lng':[-73.9249],'country':['United States'],'iso2':['US'],'iso3':['USA'],'admin_name':['New York'],'capital':['NaN'],'population':[18713220.0],'id':[1840034016]})
+      {'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764], 'Distance_from_us':[10875.131358176366]}
+      '''
+    # Calculated the distance of the suppliers from the manufacturing facility in USA
+    distance1 = []
+    lat1 = float(us["lat"])
+    long1 = float(us["lng"])
+    for index, row in Supplier_Countries.iterrows():
+        lat2 = row['lat']
+        long2 = row['lng']
+        g = geod.Inverse(lat1, long1, lat2, long2)
+        distance1.append(g['s12'] / 1000)
+    Supplier_Countries["Distance_from_us"] = distance1
+    Supplier_Countries.sort_values(by='Distance_from_us', ascending=True)
+    return Supplier_Countries
 
 
 '''  
@@ -140,197 +153,252 @@ Supplier_Countries["Time_Taken"] = time1
 
 nx.draw(G)'''
 
-Supplier_Countries = distance_calc(Supplier_Countries, us)
-
 # Randomizing variables for each order and adding specific materials supplied by each city and theor individual material costs
 def Supplier_func_Week(Supplier_dataframe):
-  '''
-  >>> Supplier_func_Week({'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764]})
-  '''                  
-  Var1 = 0
-  vol = []
-  time2 = []
-  Supplier_dataframe.sort_values(by = 'country', inplace=True)
-  Supplier_dataframe['Material'] = ['Material_1', 'Material_2', 'Material_3', 'Material_1', 'Material_2', 'Material_3', 'Material_1', 'Material_2', 'Material_3', 'Material_2']
-  Supplier_dataframe['Material_Costs'] = [5,6,12,7.5,7,10,8,8,11,10]
-  for i in range(1,len(Supplier_Countries)+1):
-    time2.append(random.randint(1,10))
-    if i in [1,4,7]:
-      vol.append(random.randint(1000,1200))
-    elif i in [2,5,8,10]:
-      vol.append(random.randint(2500,3000))
-    else:
-      vol.append(random.randint(750, 1000))
-  Supplier_dataframe['Volume'] = vol
-  Supplier_dataframe["Time_Taken"] = time2
-  #Setting time from low to high depending on the distance from the manufacturing center.
+    '''
 
-  Supplier_Countries.sort_values(by='Distance_from_us', ascending = True)
-  time2.sort()
-  
-  #supply=Supplier_dataframe.groupby("Material").Volume.sum()
-  Supplier_dataframe['Total_Costs'] = (Supplier_dataframe['Material_Costs']*Supplier_dataframe["Volume"])*(Supplier_dataframe['Distance_from_us']/10000)
-  #cost_var = Supplier_dataframe.groupby("Material").Total_Costs.sum()
-  #citywise_cost = Supplier_dataframe.groupby(['Material','city','Distance_from_us']).Total_Costs.sum()
-  Supplier_dataframe['Per_Unit_Price'] = Supplier_dataframe.Total_Costs/Supplier_dataframe.Volume
-  #if len(city_name) > 0:
-  #  Var1 = Supplier_dataframe.loc[Supplier_dataframe.city .isin(city_name.to_list())][['Material','city','Volume']]
-    #Supplier_Countries.at((Supplier_dataframe.loc[Supplier_dataframe.city .isin(city_name.to_list())].index),'Volume') = 0
-  return Supplier_dataframe
-Supplier_func_Week(Supplier_Countries.copy())
+     :param Supplier_dataframe: Dataframe with supplier details
+     :return: Supplier dataframe with materials assigned to each supplier for delivery.
+     Randomized and sorted time based on distance from US
+     >>> Df1 = pd.DataFrame()
+     >>> Supplier_func_Week(Df1)# doctest: +IGNORE_EXCEPTION_DETAIL
+     Traceback (most recent call last):
+     KeyError: 'country'
 
-Sup_df = Supplier_func_Week(Supplier_Countries)
-Material_1_inventory = Sup_df.loc[Sup_df.Material == 'Material_1']
-Mat1 = 9000
+
+     >>> Df1 = pd.DataFrame(columns=['country','Distance_from_us'])
+     >>> type(Supplier_func_Week(Df1))
+     <class 'pandas.core.frame.DataFrame'>
+    >>> Supplier_func_Week({'city':['Tokyo'], 'city_ascii':['Tokyo'],'lat':[35.6839],'lng':[139.7744],'country':['Japan'],'iso2':['JP'],'iso3':['JPN'], 'admin_name':['Tōkyō'], 'capital':['primary'],'population':[39105000.0],'id':[1392685764]})
+    '''
+    Var1 = 0
+    vol = []
+    time2 = []
+    Supplier_dataframe.sort_values(by='country', inplace=True)
+    Supplier_dataframe['Material'] = ['Material_1', 'Material_2', 'Material_3', 'Material_1', 'Material_2',
+                                      'Material_3', 'Material_1', 'Material_2', 'Material_3', 'Material_2']
+    Supplier_dataframe['Material_Costs'] = [5, 6, 12, 7.5, 7, 10, 8, 8, 11, 10]
+    for i in range(1, len(Supplier_Countries) + 1):
+        time2.append(random.randint(1, 10))
+        if i in [1, 4, 7]:
+            vol.append(random.randint(1000, 1200))
+        elif i in [2, 5, 8, 10]:
+            vol.append(random.randint(2500, 3000))
+        else:
+            vol.append(random.randint(750, 1000))
+    Supplier_dataframe['Volume'] = vol
+    Supplier_dataframe["Time_Taken"] = time2
+    # Setting time from low to high depending on the distance from the manufacturing center.
+
+    Supplier_Countries.sort_values(by='Distance_from_us', ascending=True)
+    time2.sort()
+
+    # supply=Supplier_dataframe.groupby("Material").Volume.sum()
+    Supplier_dataframe['Total_Costs'] = (Supplier_dataframe['Material_Costs'] * Supplier_dataframe["Volume"]) * (
+                Supplier_dataframe['Distance_from_us'] / 10000)
+    # cost_var = Supplier_dataframe.groupby("Material").Total_Costs.sum()
+    # citywise_cost = Supplier_dataframe.groupby(['Material','city','Distance_from_us']).Total_Costs.sum()
+    Supplier_dataframe['Per_Unit_Price'] = Supplier_dataframe.Total_Costs / Supplier_dataframe.Volume
+    # if len(city_name) > 0:
+    #  Var1 = Supplier_dataframe.loc[Supplier_dataframe.city .isin(city_name.to_list())][['Material','city','Volume']]
+    # Supplier_Countries.at((Supplier_dataframe.loc[Supplier_dataframe.city .isin(city_name.to_list())].index),'Volume') = 0
+    return Supplier_dataframe
+
+
+#Supplier_func_Week(Supplier_Countries.copy())
+#Sup_df = Supplier_func_Week(Supplier_Countries)
+#Material_1_inventory = Sup_df.loc[Sup_df.Material == 'Material_1']
+#Mat1 = 9000
+
+
 # Function to return the exact amount of material required based on order qty. Maximum material supplied is provided from the cheapest supplier.
-# Minimum material is obtained from the most expensive supplier. 
+# Minimum material is obtained from the most expensive supplier.
 def Material_Return(Material_inventory, M1):
-  Material_inventory.sort_values(by = ['Material','Per_Unit_Price'], inplace = True)
-  supplier_number = len(Material_inventory)
-  mat_dict = {}
-  mat_dict[Material_inventory.Material.unique()[0]] = []
-  count = 0
-  # Checking for material volume provided by supplier being equal to or exceeding the required volume of material
-  # If it does then break the loop else keep appending the material provided into a dictionary.
-  for index,row in Material_inventory.iterrows():
-      count = count + 1
-      if M1 - row['Volume'] == 0:
-        mat_dict[row['Material']].append(row[['city','Volume','Total_Costs', 'Time_Taken']])
-        break
-      elif M1 - row['Volume'] < 0:
-        row1 = pd.DataFrame()
-        row1['city'] = [row['city']]
-        row1['Volume'] = [M1]
-        row1['Total_Costs'] = [M1*row['Per_Unit_Price']]
-        row1['Time_Taken']=row['Time_Taken']
-        mat_dict[row['Material']].append(row1.iloc[0])
-        break
-      else:
-        M1 = M1 - row['Volume']
-        mat_dict[row['Material']].append(row[['city','Volume','Total_Costs', 'Time_Taken']])
-  return mat_dict
+    '''
 
-Material_Return(Material_1_inventory, Mat1)
+    :param Material_inventory: Rows from the original dataframe which has the city and the details of the material provided
+    :param M1: The requirement for a material either 1,2 or 3
+    :return: This returns a dictionary which contains the amount provided by the supplier
+    >>> import pandas as pd
+    >>> df1 = pd.read_excel('testfile.xlsx')
+    >>> Material_inventory = df1.loc[df1.Material=="Material_1"]
+    >>> Material_Return(Material_inventory,500)
+    '''
+    Material_inventory.sort_values(by=['Material', 'Per_Unit_Price'], inplace=True)
+    supplier_number = len(Material_inventory)
+    mat_dict = {}
+    mat_dict[Material_inventory.Material.unique()[0]] = []
+    count = 0
+    # Checking for material volume provided by supplier being equal to or exceeding the required volume of material
+    # If it does then break the loop else keep appending the material provided into a dictionary.
+    for index, row in Material_inventory.iterrows():
+        count = count + 1
+        if M1 - row['Volume'] == 0:
+            mat_dict[row['Material']].append(row[['city', 'Volume', 'Total_Costs', 'Time_Taken']])
+            break
+        elif M1 - row['Volume'] < 0:
+            row1 = pd.DataFrame()
+            row1['city'] = [row['city']]
+            row1['Volume'] = [M1]
+            row1['Total_Costs'] = [M1 * row['Per_Unit_Price']]
+            row1['Time_Taken'] = row['Time_Taken']
+            mat_dict[row['Material']].append(row1.iloc[0])
+            break
+        else:
+            M1 = M1 - row['Volume']
+            mat_dict[row['Material']].append(row[['city', 'Volume', 'Total_Costs', 'Time_Taken']])
+    return mat_dict
 
-#Function to obtain dataframe slice which provided the specific material and demand for each material. 
+
+#Material_Return(Material_1_inventory, Mat1)
+
+
+# Function to obtain dataframe slice which provided the specific material and demand for each material.
 # Returns a dictionary for each of the 3 materials provided
 def percentage_distr(M1, M2, M3, df):
-  Material_1_inventory = df.loc[df.Material == 'Material_1']
-  Material_2_inventory = df.loc[df.Material == 'Material_2']
-  Material_3_inventory = df.loc[df.Material == 'Material_3']
-  return Material_Return(Material_1_inventory, M1), Material_Return(Material_2_inventory, M2), Material_Return(Material_3_inventory, M3)
+    Material_1_inventory = df.loc[df.Material == 'Material_1']
+    Material_2_inventory = df.loc[df.Material == 'Material_2']
+    Material_3_inventory = df.loc[df.Material == 'Material_3']
+    return Material_Return(Material_1_inventory, M1), Material_Return(Material_2_inventory, M2), Material_Return(
+        Material_3_inventory, M3)
 
-#Function to create a dataframe with the required material amounts. This dataframe is regenerated every 10 days 
+
+# Function to create a dataframe with the required material amounts. This dataframe is regenerated every 10 days
 def Supply_run(var1):
-  var2 = {}
-  var3 = {}
-  count = 0
-  df_1 = pd.DataFrame()
-  for value in var1:
-    var2.update(value)
-  for value in var2.keys():
+    var2 = {}
     var3 = {}
-    for value1 in range(0, len(var2[value])):
-      var3['Material'] = value
-      var3['city'] = var2[value][value1]['city']
-      var3['Volume'] = var2[value][value1]['Volume']
-      var3['Total_Costs'] = var2[value][value1]['Total_Costs']
-      var3['Time_Taken'] = var2[value][value1]['Time_Taken']
-      df_1 = df_1.append([var3], ignore_index= True)
-  return df_1
+    count = 0
+    df_1 = pd.DataFrame()
+    for value in var1:
+        var2.update(value)
+    for value in var2.keys():
+        var3 = {}
+        for value1 in range(0, len(var2[value])):
+            var3['Material'] = value
+            var3['city'] = var2[value][value1]['city']
+            var3['Volume'] = var2[value][value1]['Volume']
+            var3['Total_Costs'] = var2[value][value1]['Total_Costs']
+            var3['Time_Taken'] = var2[value][value1]['Time_Taken']
+            df_1 = df_1.append([var3], ignore_index=True)
+    return df_1
 
-#Manufacturing inventory 
+
+# Manufacturing inventory
 def manufacturing_inventory_load():
-  in_fac = []
+    '''
 
-  max_storage = {"Material1":10000, 'Material2':20000, 'Material3':10000}
-  manu_capacity_per_day = 40
-  unit = {"Material1": 10, "Material2":20, "Material3":5}
-  needed_daily = {"Material1":400, 'Material2':800, 'Material3':200}
-  needed_weekly = {"Material1":2800, 'Material2':5600, 'Material3':1400}
+    :return: Dataframe of the manufacturing inventory which is used for an order
+    >>> type(manufacturing_inventory_load())
+    <class 'pandas.core.frame.DataFrame'>
+    '''
+    in_fac = []
 
-  for i in range(0,3):
-    in_fac.append(random.randint(5000,7000))
+    max_storage = {"Material1": 10000, 'Material2': 20000, 'Material3': 10000}
+    manu_capacity_per_day = 40
+    unit = {"Material1": 10, "Material2": 20, "Material3": 5}
+    needed_daily = {"Material1": 400, 'Material2': 800, 'Material3': 200}
+    needed_weekly = {"Material1": 2800, 'Material2': 5600, 'Material3': 1400}
+
+    for i in range(0, 3):
+        in_fac.append(random.randint(5000, 7000))
+
+    m_inventory = {'Name': ['Material1', 'Material2', 'Material3'],
+                   'In_Factory': in_fac, 'Needed Daily': needed_daily.values(), "Needed_Weekly": needed_weekly.values()}
+
+    deficit = [0, 0, 0]
+
+    # print(m_inventory['In_Factory'])
+    # Create DataFrame
+    manufacturing_inventory = pd.DataFrame(m_inventory)
+    # print(manufacturing_inventory.loc[manufacturing_inventory['Name']=='Material1'].Needed_Weekly)
+
+    # Print the output.
+    # print(manufacturing_inventory)
+
+    return manufacturing_inventory
 
 
-  m_inventory = {'Name':['Material1', 'Material2', 'Material3'],
-          'In_Factory': in_fac, 'Needed Daily': needed_daily.values(), "Needed_Weekly" : needed_weekly.values()}
-
-  deficit = [0,0,0]
-
-  #print(m_inventory['In_Factory'])
-  # Create DataFrame
-  manufacturing_inventory = pd.DataFrame(m_inventory)
-  #print(manufacturing_inventory.loc[manufacturing_inventory['Name']=='Material1'].Needed_Weekly)
-  
-  # Print the output.
-  #print(manufacturing_inventory)
-
-  return manufacturing_inventory
-
-#Days to complete the order 
+# Days to complete the order
 def days_to_make_items(qty):
-  manu_capacity_per_day = 40
-  days_needed = math.ceil(qty/manu_capacity_per_day)
-  return days_needed
+    '''
 
-#Number of materials needed to complete the order 
+    :param qty: Integer value of order quantity
+    :return: This returns the upper limit of the days needed to complete the order
+    >>> days_to_make_items(1500)
+    38
+    '''
+    manu_capacity_per_day = 40
+    days_needed = math.ceil(qty / manu_capacity_per_day)
+    return days_needed
+
+
+# Number of materials needed to complete the order
 def qty_to_make_items(manufacturing_inventory, quantity):
-  need1 = 0
-  need2 = 0
-  need3 = 0
-  unit = {"Material1": 10, "Material2":20, "Material3":5}
-  m1_needed = unit['Material1']*quantity
-  m2_needed = unit['Material2']*quantity
-  m3_needed = unit['Material3']*quantity
-  if manufacturing_inventory['In_Factory'][0] < m1_needed:
-    need1 = m1_needed - manufacturing_inventory['In_Factory'][0]
-    print(f"Material 1 needed: {need1}")
-  else:
-    print(f"Material 1 present: {m1_needed}")
-  if manufacturing_inventory['In_Factory'][1] < m2_needed:
-    need2 = m2_needed - manufacturing_inventory['In_Factory'][1]
-    print(f"Material 2 needed: {need2}")
-  else:
-    print(f"Material 2 present: {m2_needed}")
-  if manufacturing_inventory['In_Factory'][2] < m3_needed:
-    need3 = m3_needed - manufacturing_inventory['In_Factory'][2]
-    print(f"Material 3 needed: {need3}")
-  else:
-    print(f"Material 3 present: {m3_needed}")
-  return need1, need2, need3
+    need1 = 0
+    need2 = 0
+    need3 = 0
+    unit = {"Material1": 10, "Material2": 20, "Material3": 5}
+    m1_needed = unit['Material1'] * quantity
+    m2_needed = unit['Material2'] * quantity
+    m3_needed = unit['Material3'] * quantity
+    if manufacturing_inventory['In_Factory'][0] < m1_needed:
+        need1 = m1_needed - manufacturing_inventory['In_Factory'][0]
+        print(f"Material 1 needed: {need1}")
+    else:
+        print(f"Material 1 present: {m1_needed}")
+    if manufacturing_inventory['In_Factory'][1] < m2_needed:
+        need2 = m2_needed - manufacturing_inventory['In_Factory'][1]
+        print(f"Material 2 needed: {need2}")
+    else:
+        print(f"Material 2 present: {m2_needed}")
+    if manufacturing_inventory['In_Factory'][2] < m3_needed:
+        need3 = m3_needed - manufacturing_inventory['In_Factory'][2]
+        print(f"Material 3 needed: {need3}")
+    else:
+        print(f"Material 3 present: {m3_needed}")
+    return need1, need2, need3
 
-#Seeing for random order numbers
+
+# Seeing for random order numbers
 
 def orders(manufacturing_inven, qty):
-  mat_req = []
-  #for i in range(0,1):
-  req = random.randint(400,1000)
-  print(f"For order qty: {qty}")
-  M1,M2,M3 = qty_to_make_items(manufacturing_inven, qty)
-  mat_req.append(M1)
-  mat_req.append(M2)
-  mat_req.append(M3)
-  return(mat_req)
-  
-#orders
-#mat_req
+    mat_req = []
+    # for i in range(0,1):
+    req = random.randint(400, 1000)
+    print(f"For order qty: {qty}")
+    M1, M2, M3 = qty_to_make_items(manufacturing_inven, qty)
+    mat_req.append(M1)
+    mat_req.append(M2)
+    mat_req.append(M3)
+    return (mat_req)
 
-#daily simulation
 
-#days = math.floor(min(manufacturing_inventory['In_Factory']/manufacturing_inventory['Needed Daily']))
-#days
+# orders
+# mat_req
 
-#to_supplier = [orders()]
+# daily simulation
+
+# days = math.floor(min(manufacturing_inventory['In_Factory']/manufacturing_inventory['Needed Daily']))
+# days
+
+# to_supplier = [orders()]
 
 # days to complete the order
 
 def days_to_complete(order_qty):
-  manu_capacity_per_day = 40
-  days_to_complete = math.ceil(order_qty/manu_capacity_per_day)
-  return days_to_complete
+    '''
 
-#Reducing inventory level each day
+    :param order_qty: Integer
+    :return:
+    >>> days_to_complete(1500)
+    38
+    '''
+    manu_capacity_per_day = 40
+    days_to_complete = math.ceil(order_qty / manu_capacity_per_day)
+    return days_to_complete
+
+
+# Reducing inventory level each day
 '''
 day = 1
 flag = 0
@@ -354,9 +422,9 @@ for i in range(0,days_to_complete(600)):
     break
 
 '''
-#deficit
+# deficit
 
-#Reducing inventory level each day
+# Reducing inventory level each day
 '''
 day = 1
 flag = 0
@@ -412,7 +480,7 @@ if __name__ == "__main__":
   print(Df1)
   Df2 = Supply_run(percentage_distr(list_req2[0],list_req2[1],list_req2[2],Df1))
   print(Df2)
-  
+
 
   for i in range(0,1000):
     for i in range(0,days_to_complete(qty)):
@@ -459,13 +527,13 @@ if __name__ == "__main__":
         days_lost = days_lost + 1
         losses = losses + 40
         print("Inventory is: ", inventory)
-    
-  
+
+
   #---------------------#
 
-  
+
   try:
-    
+
     print("Number of days taken: ", day)
     print("Number of goods made are: ", inventory)
     print("Number of days goods could not be made: ", days_lost )
@@ -481,93 +549,96 @@ if __name__ == "__main__":
     pass
 '''
 
-#Reducing inventory level each day
+# Reducing inventory level each day
 if __name__ == "__main__":
-  Supplier_Countries, us = Dataframe_Load()
-  Supplier_Countries = value_add(Supplier_Countries)
-  Supplier_Countries = distance_calc(Supplier_Countries, us)
-  manufacturing_inventory = manufacturing_inventory_load()
-  day = 1
-  flag = 0
-  count = 0
-  count_days = -1
-  inventory = 0
-  losses = 0
-  costs = 0
-  qty = random.randint(4000,10000)
-  days_lost = 0
-  Df1 = Supplier_func_Week(Supplier_Countries.copy())
-  list_req2 = []
-  list_req2 = orders(manufacturing_inventory, qty)
-  print(list_req2)
-  Df2 = Supply_run(percentage_distr(list_req2[0],list_req2[1],list_req2[2],Df1))
-  print(Df2)
+    Supplier_Countries, us = Dataframe_Load()
+    Supplier_Countries = value_add(Supplier_Countries)
+    Supplier_Countries = distance_calc(Supplier_Countries, us)
+    manufacturing_inventory = manufacturing_inventory_load()
+    day = 1
+    flag = 0
+    count = 0
+    count_days = -1
+    inventory = 0
+    losses = 0
+    costs = 0
+    qty = random.randint(4000, 10000)
+    days_lost = 0
+    Df1 = Supplier_func_Week(Supplier_Countries.copy())
+    list_req2 = []
+    list_req2 = orders(manufacturing_inventory, qty)
+    print(list_req2)
+    Df2 = Supply_run(percentage_distr(list_req2[0], list_req2[1], list_req2[2], Df1))
+    print(Df2)
 
-  for j in range(0,100):
-    for i in range(0,days_to_complete(qty)):
-      count_days = count_days + 1
-      supply_df = Df1.loc[Df1.Time_Taken == i]
-      if count_days%10 ==0 and count_days > 0:
-        list_req = orders(manufacturing_inventory, (qty-inventory))
-        Df1 = Supplier_func_Week(Supplier_Countries.copy())
-        print('material3 required: ', list_req[2])
-        no_of_iter = count_days/10
-        Df1['Time_Taken'] = Df1.Time_Taken + (10*no_of_iter) 
-        print(Df1) 
-      print("The materials supplied this iteration are:- \n", supply_df)
-      if len(supply_df) > 0:
-        if len(supply_df.loc[supply_df.Material == 'Material_1']) > 0:
-          manufacturing_inventory.at[0, 'In_Factory'] = manufacturing_inventory.iloc[0].In_Factory + supply_df.loc[supply_df.Material == 'Material_1'].Volume.sum()
-          costs = costs +  supply_df.loc[supply_df.Material == 'Material_1'].Total_Costs.sum()   
-        if len(supply_df.loc[supply_df.Material == 'Material_2']) > 0:
-          manufacturing_inventory.at[1, 'In_Factory'] = manufacturing_inventory.iloc[1].In_Factory + supply_df.loc[supply_df.Material == 'Material_2'].Volume.sum()
-          costs = costs +  supply_df.loc[supply_df.Material == 'Material_2'].Total_Costs.sum()
-        if len(supply_df.loc[supply_df.Material == 'Material_3']) > 0:
-          manufacturing_inventory.at[2, 'In_Factory'] = manufacturing_inventory.iloc[2].In_Factory + supply_df.loc[supply_df.Material == 'Material_3'].Volume.sum()
-          costs = costs +  supply_df.loc[supply_df.Material == 'Material_3'].Total_Costs.sum()
-      print(costs)
-      print(f"Day : {day}")
+    for j in range(0, 100):
+        for i in range(0, days_to_complete(qty)):
+            count_days = count_days + 1
+            supply_df = Df1.loc[Df1.Time_Taken == i]
+            if count_days % 10 == 0 and count_days > 0:
+                list_req = orders(manufacturing_inventory, (qty - inventory))
+                Df1 = Supplier_func_Week(Supplier_Countries.copy())
+                print('material3 required: ', list_req[2])
+                no_of_iter = count_days / 10
+                Df1['Time_Taken'] = Df1.Time_Taken + (10 * no_of_iter)
+                print(Df1)
+            print("The materials supplied this iteration are:- \n", supply_df)
+            if len(supply_df) > 0:
+                if len(supply_df.loc[supply_df.Material == 'Material_1']) > 0:
+                    manufacturing_inventory.at[0, 'In_Factory'] = manufacturing_inventory.iloc[0].In_Factory + \
+                                                                  supply_df.loc[
+                                                                      supply_df.Material == 'Material_1'].Volume.sum()
+                    costs = costs + supply_df.loc[supply_df.Material == 'Material_1'].Total_Costs.sum()
+                if len(supply_df.loc[supply_df.Material == 'Material_2']) > 0:
+                    manufacturing_inventory.at[1, 'In_Factory'] = manufacturing_inventory.iloc[1].In_Factory + \
+                                                                  supply_df.loc[
+                                                                      supply_df.Material == 'Material_2'].Volume.sum()
+                    costs = costs + supply_df.loc[supply_df.Material == 'Material_2'].Total_Costs.sum()
+                if len(supply_df.loc[supply_df.Material == 'Material_3']) > 0:
+                    manufacturing_inventory.at[2, 'In_Factory'] = manufacturing_inventory.iloc[2].In_Factory + \
+                                                                  supply_df.loc[
+                                                                      supply_df.Material == 'Material_3'].Volume.sum()
+                    costs = costs + supply_df.loc[supply_df.Material == 'Material_3'].Total_Costs.sum()
+            print(costs)
+            print(f"Day : {day}")
 
-      for index, row in manufacturing_inventory.iterrows():
-        if min(manufacturing_inventory["In_Factory"]) <= 0:
-          flag = 1
-          break  
-        count +=1
-        sub = row['In_Factory']- row['Needed Daily']
-        if sub<= 0 :
-          manufacturing_inventory.at[index,'In_Factory'] = 0
-          flag = 1
-        else:
-          #manufacturing_inventory.iloc[index].replace(to_replace=row['In_Factory'], value = sub)
-          manufacturing_inventory.at[index,'In_Factory'] = sub
-          flag = 0
-      day+=1
-      print(manufacturing_inventory)
-      if flag !=1:
-        inventory = inventory + 40
-      else:
-        days_lost = days_lost + 1
-        losses = losses + 40
-        print("Inventory is: ", inventory)
+            for index, row in manufacturing_inventory.iterrows():
+                if min(manufacturing_inventory["In_Factory"]) <= 0:
+                    flag = 1
+                    break
+                count += 1
+                sub = row['In_Factory'] - row['Needed Daily']
+                if sub <= 0:
+                    manufacturing_inventory.at[index, 'In_Factory'] = 0
+                    flag = 1
+                else:
+                    # manufacturing_inventory.iloc[index].replace(to_replace=row['In_Factory'], value = sub)
+                    manufacturing_inventory.at[index, 'In_Factory'] = sub
+                    flag = 0
+            day += 1
+            print(manufacturing_inventory)
+            if flag != 1:
+                inventory = inventory + 40
+            else:
+                days_lost = days_lost + 1
+                losses = losses + 40
+                print("Inventory is: ", inventory)
 
+    print("Number of goods made are: ", inventory)
+    print("Number of days goods could not be made: ", days_lost)
+    print("Total Cost of the order is: ", costs)
 
+    list_days_lost = []
+    list_days_lost.append(days_lost)
 
-  print("Number of goods made are: ", inventory)
-  print("Number of days goods could not be made: ", days_lost )
-  print("Total Cost of the order is: ", costs)
-
-  list_days_lost = []
-  list_days_lost.append(days_lost)
-
-  total_sales_value = costs/qty
-  Total_losses_made = losses*total_sales_value
-  print("Price per good to counter the loss is: ", costs/inventory)
-  print("Price the godds should have been is: ", costs/qty)
-  var0 = costs/inventory
-  print("Losses made are: ", Total_losses_made)
-  print("Average days lost are")
-  print(f"Non Optimized cost is: {(costs/100)}")
-  print(f"Non Optimized days lost is: {(days_lost/100)}")
-  print(f"Non Optimized price per good is: {(var0)}")
-  print("Price the godds should have been is: ", costs/qty)
-
+    total_sales_value = costs / qty
+    Total_losses_made = losses * total_sales_value
+    print("Price per good to counter the loss is: ", costs / inventory)
+    print("Price the godds should have been is: ", costs / qty)
+    var0 = costs / inventory
+    print("Losses made are: ", Total_losses_made)
+    print("Average days lost are")
+    print(f"Non Optimized cost is: {(costs / 100)}")
+    print(f"Non Optimized days lost is: {(days_lost / 100)}")
+    print(f"Non Optimized price per good is: {(var0)}")
+    print("Price the godds should have been is: ", costs / qty)
